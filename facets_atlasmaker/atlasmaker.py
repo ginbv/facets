@@ -25,6 +25,9 @@ flags.DEFINE_integer('max_failures', None,
 flags.DEFINE_string('sourcelist', None,
                     'Full path to csv file that lists source images. Each line '
                     'should contain the path to an image.')
+flags.DEFINE_string('filename', None,
+                    'Name of the atlas generated '
+                    'should contain string')
 flags.DEFINE_enum('sourcelist_dups_handling', 'ignore',
                   ['ignore', 'fail', 'unique'],
                   'What action to take if duplicate image locations are found '
@@ -128,8 +131,9 @@ def main(argv):
         'failures')
 
   if FLAGS.atlas_width is not None or FLAGS.atlas_height is not None:
-    raise NotImplementedError(
-        'Does not yet support specifying an atlas size.')
+      print(FLAGS.atlas_width , FLAGS.atlas_height)
+    # raise NotImplementedError(
+    #     'Does not yet support specifying an atlas size.')
 
   if FLAGS.sourcelist is None:
     raise flags.ValidationError('You must specify a list of image sources.')
@@ -199,7 +203,8 @@ def main(argv):
 
   sprite_atlas_settings = montage.SpriteAtlasSettings(
       img_format=FLAGS.image_format, height=FLAGS.atlas_height,
-      width=FLAGS.atlas_width)
+      width=FLAGS.atlas_width , filename=FLAGS.filename)
+      # width=FLAGS.atlas_width)
 
   # Generate the atlas from converted images.
   sprite_atlas_generator = montage.SpriteAtlasGenerator(

@@ -131,7 +131,9 @@ class SpriteAtlasGenerator(object):
       return ([spriteatlas1], [manifest1])
     else:
       # TODO: Support creating multiple sprite atlases.
-      raise NotImplementedError()
+      spriteatlas1 , manifest1 = self._create_multiple_atlas()
+      return (spriteatlas1, manifest1)
+      # raise NotImplementedError()
 
   def _create_single_atlas(self):
     """Returns a single sprite atlas"""
@@ -185,12 +187,68 @@ class SpriteAtlasGenerator(object):
         manifest.append(img_manifest)
         image_idx += 1
 
-    logging.info('Montaged %d images onto sprite atlas of size %s '
+        logging.info('Montaged %d images onto sprite atlas of size %s '
                  'pixels.' % (image_idx, str(atlas_size_pixels)))
-    if failed_images_count > 0:
-      logging.warning('%d images had failures and were replaced by the default '
+        if failed_images_count > 0:
+          logging.warning('%d images had failures and were replaced by the default '
                       'image' % failed_images_count)
     return montage, manifest
+  def _create_multiple_atlas(self):
+    height = self._atlas_settings.height
+    width = self._atlas_settings.width
+    FRAME = height * width
+    NUM_IMAGE = math.ceil(self._num_input_images / FRAME)
+    manifestlist = []
+    montagelist = []
+    for i in range(NUM_IMAGE):
+      manifest = []
+      image_idx = i * width * height
+      atlas_size_pixels = (width * self._img_width_height_px[0],
+                           height * self._img_width_height_px[1])
+      logging.debug('generating atlas of size %d, %d' % (atlas_size_pixels[0],
+                                                         atlas_size_pixels[1]))
+      # We create a background image of the atlas size that we will paste the
+      # sprite images onto.
+      montage = Image.new('RGBA', atlas_size_pixels, (255, 255, 255, 255))
+      # Generate row by row, from left to right, top to bottom.
+
+      failed_images_count = 0
+      for row_idx in range(0, width):
+        offset_height = row_idx * self._img_width_height_px[1]
+        for col_idx in range(0, height):
+          if image_idx >= (i + 1) * width * height or image_idx >= self._num_input_images:
+            # Finished montaging all images.
+            break
+          offset_width = col_idx * self._img_width_height_px[0]
+
+          # Manifest entry for that image.
+          img_manifest = {
+            MANIFEST_IMAGE_NAME_KEY:
+              os.path.basename(self._img_src_paths[image_idx]),
+            MANIFEST_SOURCE_IMAGE_KEY: self._img_src_paths[image_idx],
+            MANIFEST_OFFSET_X_KEY: offset_width,
+            MANIFEST_OFFSET_Y_KEY: offset_height
+          }
+
+          img = self._images_with_statuses[image_idx][0]
+          status = self._images_with_statuses[image_idx][1]
+          if img is not None:
+            montage.paste(img, (offset_width, offset_height))
+          else:
+            montage.paste(self._default_image, (offset_width, offset_height))
+            failed_images_count += 1
+            # Add error message to manifest.
+            img_manifest[MANIFEST_IMAGE_FAIL_KEY] = status
+          manifest.append(img_manifest)
+          image_idx += 1
+      montagelist.append(montage)
+      manifestlist.append(manifest)
+      logging.info('Montaged %d images onto sprite atlas of size %s '
+                   'pixels.' % (image_idx, str(atlas_size_pixels)))
+      if failed_images_count > 0:
+        logging.warning('%d images had failures and were replaced by the default '
+                        'image' % failed_images_count)
+    return montagelist, manifestlist
 
   def _generate_default_atlas_size(self):
     """Generate a default square size for the atlas if input size is not

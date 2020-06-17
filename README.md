@@ -75,6 +75,10 @@ If you want to use the visualizations you built locally in a Jupyter notebook, f
   * Alternatively, you can manually install the nbextension by finding your jupyter installation's ```share/jupyter/nbextensions``` folder and copying the facets-dist directory into it.
 3. In the notebook cell's HTML link tag that loads the built facets html, load from ```/nbextensions/facets-dist/facets-jupyter.html```, which is the locally installed facets distribution. from the previous step.
 
+## Changes in repo
+1. Added custom filename for atlas generation
+2. Added custom atlas size for multiple atlas creation
+
 ## Known Issues
 
 * The Facets visualizations currently work only in Chrome - [Issue 9](../../issues/9).
